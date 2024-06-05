@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Leaflet Map Click to Get Weather</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: Arial, sans-serif;
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        background-image: url("images/box1.jpg");
+      }
+
+      .container {
+        display: flex;
+        flex-direction: row;
+        flex-grow: 1;
+        gap: 20px;
+      }
+
+      #map {
+        height: 97%;
+        width: 70%;
+        margin-left: 17px;
+      }
+
+      .weather-container {
+        width: 25%;
+        color: white;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        margin-bottom: 16px;
+        border-radius: 17px;
+        background-image: url("images/box1.jpg");
+        margin-right: 11px;
+        border: 4px solid white;
+      }
+
+      .location {
+        font-size: 24px;
+        margin-bottom: 10px;
+      }
+
+      .temperature-circle {
+        width: 120px;
+        height: 120px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 36px;
+        margin-bottom: 10px;
+      }
+
+      .quote {
+        font-size: 18px;
+        margin-bottom: 20px;
+      }
+
+      .lower-section {
+        width: 100%;
+      }
+
+      .bar {
+        background: rgba(255, 255, 255, 0.2);
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        margin-bottom: 10px;
+      }
+
+      .small-boxes {
+        display: flex;
+        justify-content: space-between;
+      }
+
+      .small-box {
+        width: 30%;
+        background: rgba(255, 255, 255, 0.2);
+        height: 80px;
+        display: flex;
+        flex-direction: column; /* Adjusted to stack icon and content */
+        align-items: center; /* Adjusted to center content */
+        justify-content: center; /* Adjusted to center content */
+        font-size: 16px;
+      }
+
+      .small-box i {
+        margin-bottom: 5px; /* Added space between icon and content */
+      }
+
+      .click_any {
+        color: white;
+        text-align: center;
+        font-family: math;
+        letter-spacing: 9px;
+      }
+
+      .bar span {
+        margin-right: 10px;
+      }
+      .lower_div {
+        margin-top: 8px;
+      }
+    </style>
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
+    <script>
+      function updateDateTime() {
+        var now = new Date();
+        var day = now.toLocaleDateString("en-US", { weekday: "long" });
+        var date = now.toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        });
+        var time = now.toLocaleTimeString("en-US", {
+          hour: "numeric",
+          minute: "numeric",
+          second: "numeric",
+          hour12: true,
+        });
+
+        document.getElementById("day").textContent = day;
+        document.getElementById("date").textContent = date;
+        document.getElementById("time").textContent = time;
+      }
+
+      // Update date and time every second
+      setInterval(updateDateTime, 1000);
+
+      function initMap() {
+        // Create a map centered at a default location
+        const defaultLocation = [40.7128, -74.006]; // New York City coordinates
+        const map = L.map("map").setView(defaultLocation, 8);
+
+        // Add OpenStreetMap tiles
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: "&copy; OpenStreetMap contributors",
+        }).addTo(map);
+
+        // Add a click event listener to the map
+        map.on("click", function (e) {
+          const clickedLocation = e.latlng;
+          getWeather(clickedLocation.lat, clickedLocation.lng);
+        });
+      }
+
+      function getWeather(lat, lng) {
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", "get_weather.php", true);
+        xhr.setRequestHeader(
+          "Content-Type",
+          "application/x-www-form-urlencoded"
+        );
+        xhr.onload = function () {
+          if (this.status === 200) {
+            try {
+              const weatherData = JSON.parse(this.responseText);
+              console.log(weatherData); // Log weather data to console for debugging
+              if (weatherData.error) {
+                console.log(weatherData.error);
+                alert(weatherData.error);
+              } else {
+                console.log(weatherData);
+                document.getElementById("location").textContent =
+                  weatherData.location;
+                document.getElementById("temperature").textContent =
+                  weatherData.temperature;
+
+                document.getElementById("condition").innerHTML =
+                  '<i class="fa-solid fa-cloud"></i>' + weatherData.condition;
+                document.getElementById("humidity").innerHTML =
+                  '<i class="ficon fa-solid fa-fire-flame-simple"></i>' +
+                  weatherData.humidity;
+                document.getElementById("feelslike").innerHTML =
+                  '<i class="fa-regular fa-face-smile"></i>' +
+                  weatherData.feelslike;
+                document.getElementById("windSpeed").innerHTML =
+                  '<i class="ficon fa-solid fa-wind"></i>' +
+                  weatherData.windSpeed;
+                document.getElementById("winddir").innerHTML =
+                  '<i class="ficon fa-regular fa-compass"></i>' +
+                  weatherData.winddir;
+                document.getElementById("heat").innerHTML =
+                  '<i class="ficon fa-solid fa-temperature-high"></i>' +
+                  weatherData.heat;
+
+                console.log(weatherData.temperature);
+              }
+            } catch (e) {
+              console.log(e.message);
+              alert("Error parsing weather data: " + e.message);
+            }
+          } else {
+            alert("Error fetching weather information");
+          }
+        };
+        xhr.send("lat=" + lat + "&lng=" + lng);
+      }
+    </script>
+  </head>
+  <body onload="initMap()">
+    <h2 class="click_any">Click Anywhere on the Map to Get the Weather</h2>
+    <div class="container">
+      <div id="map"></div>
+      <div class="weather-container">
+        <div class="location" id="location">Los Angeles</div>
+        <div class="temperature-circle" id="temperature">67°F</div>
+        <div class="quote">You look amazing today.</div>
+        <div class="lower-section">
+          <div class="bar">
+            <span id="day"></span> <span id="date"></span>
+            <span id="time"></span>
+          </div>
+          <div class="small-boxes">
+            <div class="small-box" id="condition">
+              <i class="fa-solid fa-cloud"></i>
+              <span>Cloudy</span>
+            </div>
+            <div class="small-box" id="humidity">
+              <i class="ficon fa-solid fa-fire-flame-simple"></i>
+              <span>30%</span>
+            </div>
+            <div class="small-box" id="feelslike">
+              <i class="fa-regular fa-face-smile"></i>
+              <span>38°C</span>
+            </div>
+          </div>
+          <div class="small-boxes lower_div">
+            <div class="small-box" id="windSpeed">
+              <i class="ficon fa-solid fa-wind"></i>
+              <span>40 kph</span>
+            </div>
+            <div class="small-box" id="winddir">
+              <i class="ficon fa-regular fa-compass"></i>
+              <span>N</span>
+            </div>
+            <div class="small-box" id="heat">
+              <i class="ficon fa-solid fa-temperature-high"></i>
+              <span>42°C</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
